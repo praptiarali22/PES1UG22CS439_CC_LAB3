@@ -1,33 +1,43 @@
-from products import dao
+import json
+
+import products
+from cart import dao
+from products import Product
 
 
-class Product:
-    def __init__(self, id: int, name: str, description: str, cost: float, qty: int = 0):
+class Cart:
+    def _init_(self, id: int, username: str, contents: list[Product], cost: float):
         self.id = id
-        self.name = name
-        self.description = description
+        self.username = username
+        self.contents = contents
         self.cost = cost
-        self.qty = qty
 
-    @classmethod
-    def from_dict(cls, data: dict) -> "Product":
-        return cls(**data)
+    def load(data):
+        return Cart(data['id'], data['username'], data['contents'], data['cost'])
 
 
-def list_products() -> list[Product]:
-    return [Product.from_dict(product) for product in dao.list_products()]
+def get_cart(username: str) -> list:
+    cart_details = dao.get_cart(username)
+    if cart_details is None:
+        return []
+    
+    items = [
+        get_product(product)
+        for cart_detail in cart_details
+        for product in json.loads(cart_detail['contents']) 
+    ]
+    
+    return items
+
+    
 
 
-def get_product(product_id: int) -> Product:
-    return Product.from_dict(dao.get_product(product_id))
+def add_to_cart(username: str, product_id: int):
+    dao.add_to_cart(username, product_id)
 
 
-def add_product(product: dict):
-    dao.add_product(product)
+def remove_from_cart(username: str, product_id: int):
+    dao.remove_from_cart(username, product_id)
 
-
-def update_qty(product_id: int, qty: int):
-    if qty < 0:
-        raise ValueError("Quantity cannot be negative")
-    dao.update_qty(product_id, qty)
-
+def delete_cart(username: str):
+    dao.delete_cart(username)
